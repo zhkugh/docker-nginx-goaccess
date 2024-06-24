@@ -1,0 +1,38 @@
+services:
+  nginx:
+    restart: always
+    container_name: nginx
+    image: nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./html:/usr/share/nginx/html
+      - ./www:/var/www
+      - ./logs:/var/log/nginx
+      - ./nginx.conf/:/etc/nginx/nginx.conf
+      - ./etc/cert:/etc/nginx/cert
+      - ./conf.d:/etc/nginx/conf.d
+    environment:
+      - NGINX_PORT=80
+      - TZ=Asia/Shanghai
+    privileged: true
+    networks:
+      - webnet
+  goaccess:
+    restart: always
+    image: allinurl/goaccess
+    container_name: goaccess
+    ports:
+      - 7890:7890
+    volumes:
+      - ./logs:/logs
+      - ./html/static/goaccess:/report
+   # WebSocket connection to 'ws://goaccess:7890/' failed: docker 网络 DNS 问题，暂时用 0.0.0.0 绕过 DNS 方案处理
+    entrypoint: sh -c 'goaccess /logs/access.log -o /report/index.html --real-time-html --log-format=COMBINED --ws-url=ws://0.0.0.0:7890/'
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - webnet
+networks:
+  webnet:
